@@ -1,0 +1,26 @@
+{
+  "name": "milo-cost-auditor",
+  "image": "mcr.microsoft.com/devcontainers/python:1-3.13-bookworm",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.vscode-pylance"
+      ]
+    },
+    "codespaces": {
+      "openFiles": [
+        "examples/audit_your_own_bill.md",
+        "launch/real_milo_audit_20260516.md"
+      ]
+    }
+  },
+  "postCreateCommand": "pip install -e . && pip install pytest && python -m pytest -q && echo '\n✅ Setup complete.\n\nTry the audit in 60 seconds:\n  python -c \"from milo_cost_auditor import audit_engine; print(audit_engine.audit(open(\\\"launch/fixtures/milo_real_invoice_sample.csv\\\").read(), period_days=30))\"\n\nOr browse examples/audit_your_own_bill.md.\n'",
+  "remoteUser": "vscode",
+  "forwardPorts": [],
+  "hostRequirements": {
+    "cpus": 2,
+    "memory": "4gb",
+    "storage": "8gb"
+  }
+}

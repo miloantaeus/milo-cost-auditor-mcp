@@ -44,6 +44,14 @@ pip install -e .
 
 Requires Python 3.10+. Tested against Python 3.13.
 
+### Or try it in 60 seconds, no install required
+
+Click here to launch in **GitHub Codespaces** (free for any GitHub account, runs in browser):
+
+[![Open in Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/miloantaeus/milo-cost-auditor-mcp?quickstart=1)
+
+The devcontainer auto-installs the package and runs the demo audit on Milo's own 933-call ledger (the one that found 87.3% waste). You see the report in your browser inside a minute. No local Python, no API keys, no commitment.
+
 ## Wire it into Claude Code
 
 Add to `~/.claude/mcp_servers.json` (or your project's `.mcp.json`):
