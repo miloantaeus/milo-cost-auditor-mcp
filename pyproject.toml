@@ -1,0 +1,66 @@
+[build-system]
+requires = ["hatchling>=1.18"]
+build-backend = "hatchling.build"
+
+[project]
+name = "milo-cost-auditor"
+version = "0.1.0"
+description = "MCP server that audits LLM API spend and suggests cheaper routing. Find waste, save money, in real time."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+authors = [
+    { name = "Milo Antaeus", email = "miloantaeus@gmail.com" },
+]
+maintainers = [
+    { name = "Milo Antaeus", email = "miloantaeus@gmail.com" },
+]
+keywords = ["mcp", "llm", "cost", "audit", "openai", "anthropic", "routing", "litellm"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Monitoring",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "pydantic>=2.0.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/miloantaeus/milo-cost-auditor"
+Repository = "https://github.com/miloantaeus/milo-cost-auditor"
+Issues = "https://github.com/miloantaeus/milo-cost-auditor/issues"
+
+[project.scripts]
+mcp-cost-auditor = "milo_cost_auditor.__main__:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/milo_cost_auditor"]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "src/milo_cost_auditor",
+    "tests",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
