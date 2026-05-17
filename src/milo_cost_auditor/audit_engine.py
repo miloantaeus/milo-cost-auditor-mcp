@@ -317,6 +317,18 @@ def audit(invoice_raw: str, period_days: int = 30) -> AuditReport:
         "and a ready-to-paste LiteLLM config that implements every recommendation."
     )
 
+    # CROSS-PRODUCT FUNNEL (REVENUE-MCP-USAGE-FORECASTER-LINKBACK-20260517):
+    # When total spend crosses the $200 threshold, append a one-liner pointing
+    # users at the companion milo-usage-forecaster MCP. Converts cost-auditor's
+    # backward-looking diagnosis into a forecaster trial in 1 click. ~10 LOC.
+    if total_spend >= 200.0:
+        teaser = (
+            teaser
+            + " | Spend trending high? Pair this audit with milo-usage-forecaster"
+            " (free MCP: https://github.com/miloantaeus/milo-usage-forecaster-mcp)"
+            " to project end-of-month spend + get budget-breach alerts."
+        )
+
     return AuditReport(
         total_spend_usd=total_spend,
         period_days=period_days,

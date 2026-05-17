@@ -100,3 +100,26 @@ def test_fill_missing_costs_uses_pricing_table() -> None:
     audit_engine._fill_missing_costs(calls)
     # gpt-5.5: $5/1M input + $30/1M output = $35 for 1M+1M
     assert calls[0].cost_usd == pytest.approx(35.0, rel=1e-3)
+
+
+# ---- CROSS-PRODUCT FUNNEL TEST (REVENUE-MCP-USAGE-FORECASTER-LINKBACK-20260517) ----
+
+
+def test_audit_appends_usage_forecaster_callout_when_spend_high() -> None:
+    """When total_spend >= $200, the pro_teaser should mention usage-forecaster."""
+    # Synthesize an invoice with high spend (1B input + 1B output on gpt-5.5 = ~$35,000)
+    raw = "model,input_tokens,output_tokens,cost\ngpt-5.5,1000000000,1000000000,35000"
+    report = audit_engine.audit(raw, period_days=30)
+    assert report.total_spend_usd >= 200.0
+    assert "milo-usage-forecaster" in report.pro_teaser, (
+        f"Expected usage-forecaster callout in high-spend pro_teaser, got: {report.pro_teaser!r}"
+    )
+
+
+def test_audit_omits_usage_forecaster_callout_when_spend_low() -> None:
+    """When total_spend < $200, the pro_teaser should NOT mention usage-forecaster.
+    Keeps the callout targeted to users who'd actually benefit from forecasting."""
+    raw = "model,input_tokens,output_tokens,cost\ngpt-5.5,100000,100000,3.5"
+    report = audit_engine.audit(raw, period_days=30)
+    assert report.total_spend_usd < 200.0
+    assert "milo-usage-forecaster" not in report.pro_teaser
