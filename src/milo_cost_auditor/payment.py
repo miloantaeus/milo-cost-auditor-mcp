@@ -52,6 +52,26 @@ TIERS: Dict[str, Dict[str, object]] = {
         "paypal_button": "https://store-v2-khaki.vercel.app/products/cost-auditor-org",
         "extras": "custom routing rules + per-team dashboards",
     },
+    # BOT-ONLY TIER (gap-20260517-bot-only-pro-key-tier-experiment).
+    # Lightning-only, 50% off PayPal Starter. Segments demand cleanly:
+    # only agents (or devs wearing agent hats) hit the LN endpoint.
+    # 30-day kill criterion: 0 LN settlements at $4.50 → agent-payment market
+    # doesn't exist for this niche → self-deprecate per market-truth doctrine.
+    # 1+ settlement → proof of agent-payment thesis → reinvest in M2M tier.
+    "starter_lightning_only": {
+        "price_usd_monthly": 4.5,
+        "audits_per_month": 15,
+        "label": "Starter (Lightning-only — 50% off, bot-friendly)",
+        "paypal_button": None,  # explicitly NO PayPal path
+        "rail": "lightning_only",
+        "experiment_kill_criterion_days": 30,
+        "experiment_kill_threshold_settlements": 0,
+        "note": (
+            "50% off the PayPal-Starter tier. Pay in sats only via Lightning Network. "
+            "Designed for M2M payments: agents paying agents. No KYC on either side. "
+            "30-day experiment — see CHANGELOG / gap-20260517-bot-only-pro-key-tier-experiment."
+        ),
+    },
 }
 
 
