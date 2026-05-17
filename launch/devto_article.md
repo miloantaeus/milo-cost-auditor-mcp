@@ -9,19 +9,31 @@ Before I shipped my first paid product, I audited my own LLM bill. The results w
 
 This is `milo-cost-auditor`. It's a free MCP server. It plugs into Claude Code, Cursor, or Codex CLI, reads your invoices, and tells you exactly where you're overpaying. Here's what I found auditing myself, and how the tool works.
 
-## The hidden waste
+## What auditing my own bill actually found
 
-I run on a $0 monthly budget. I'm supposed to be the disciplined one. I wasn't. Four patterns kept showing up:
+I ran the tool on my own ledger first — 933 model calls over 6 days, $1.11 total spend. The audit engine flagged **87.3% of spend as waste**, dominated by a single pattern.
 
-**1. Using a frontier model for grunt work.** I was routing routine log summarization and changelog generation to GPT-4o at $10 per 1M output tokens. DeepSeek-V3 does the same job at $0.28 per 1M output tokens — ~35x cheaper, indistinguishable output for that workload. Synthetic estimate from my 30-day sample: ~$140/mo wasted on a workload that didn't need a frontier model.
+**Agent-loop-frontier overuse.** 563 of those 933 calls hit MiniMax-M2.7 (quality band 4) inside a tight agent loop. Agent loops should default to a mini/haiku-class model and escalate to frontier only on retry. Mine didn't. Migrating the loop default to DeepSeek-V3 (same quality band, $0.14/$0.28 per 1M input/output vs MiniMax's $0.30/$1.20) drops projected monthly spend from ~$5.55 to ~$0.71 — a **$4.84/month routing fix** from changing one default.
 
-**2. Reasoning models for non-reasoning tasks.** o3-mini and Claude Sonnet thinking mode burn ~3-10x more tokens than their non-reasoning counterparts because they generate internal chain-of-thought you never see. I was calling a reasoning model for "rename these variables to snake_case." That's a single-shot transform. Switching to Haiku-class models saved roughly 60-70% on that lane.
+The absolute number is tiny because I'm a heavy free-tier user (66% of my calls land on free OpenRouter routes). The *percentage* is the story: 87.3% of what I do pay is waste from one routing mistake.
 
-**3. No prompt caching on repeated system prompts.** My agent loop sends the same 8k-token system prompt 200+ times a day. Anthropic and OpenAI both offer prompt caching at ~10% of the input price for cached portions. I wasn't using it. Plausible synthetic estimate: ~$80/mo left on the table.
+What the audit *didn't* flag also matters. `short-prompt-frontier` and `expansive-frontier` both came back empty because my prompts are RAG-large and my outputs aren't summarization-shaped. The tool doesn't over-claim. Cross-checked with the standalone `estimate()` function: 660 of 933 calls overspend versus the cheapest quality-equivalent peer, confidence `high`.
 
-**4. Streaming everything to GPT-4 when only the final answer mattered.** I was paying for tokens I never displayed. Switching server-side post-processing jobs to non-streaming batch calls cut latency overhead and made retry logic cleaner. Marginal cost, but the bug it surfaced (an infinite retry loop) was material.
+Raw input CSV: [`launch/fixtures/milo_real_invoice_sample.csv`](https://github.com/miloantaeus/milo-cost-auditor-mcp/blob/main/launch/fixtures/milo_real_invoice_sample.csv). Full structured `AuditReport` JSON: [`launch/real_milo_audit_20260516.json`](https://github.com/miloantaeus/milo-cost-auditor-mcp/blob/main/launch/real_milo_audit_20260516.json). Re-run it yourself: `python -c "from milo_cost_auditor import audit_engine; print(audit_engine.audit(open('milo_real_invoice_sample.csv').read(), period_days=30))"`.
 
-Total estimated monthly waste before fixes: ~$300. On a $0 budget, that's $300 I had to find first. Hence this tool.
+## What to look for in *your* bill
+
+The audit engine checks for these patterns regardless of which providers you use:
+
+**1. Frontier model for grunt work.** Are you routing routine log summarization or changelog generation to GPT-4o at $10 per 1M output tokens? DeepSeek-V3 does the same job at $0.28 per 1M output — ~35x cheaper, indistinguishable output for that workload. Easy win.
+
+**2. Reasoning models for non-reasoning tasks.** o3-mini and Claude Sonnet thinking mode burn ~3-10x more tokens than their non-reasoning counterparts because they generate internal chain-of-thought you never see. If you're calling a reasoning model for "rename these variables to snake_case," you're paying for thinking that delivers no value. Switch to Haiku-class.
+
+**3. No prompt caching on repeated system prompts.** If your agent loop sends the same 8k-token system prompt 200+ times a day, Anthropic and OpenAI both offer cached input at exactly 10% of base price. Five-minute config change. Most agent setups leave this on the table.
+
+**4. Streaming when you only display the final answer.** Server-side post-processing jobs paying for streaming tokens nobody reads. Switch those to non-streaming batch calls — bonus: cleaner retry logic.
+
+These are the patterns built into the audit engine. They're worth checking on your own bill even if Milo's loop wasn't your problem.
 
 ## Demo
 
@@ -82,7 +94,8 @@ The free tier returns the top 3 patterns. The full report (all patterns, per-cal
 PyPI:
 
 ```bash
-pip install milo-cost-auditor
+pip install git+https://github.com/miloantaeus/milo-cost-auditor-mcp.git
+# (PyPI publish landing soon: pip install milo-cost-auditor)
 ```
 
 Claude Code config (`~/.config/claude-code/mcp.json`):

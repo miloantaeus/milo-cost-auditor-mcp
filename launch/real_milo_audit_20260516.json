@@ -1,0 +1,56 @@
+{
+  "real_audit_report": {
+    "total_spend_usd": 1.1091,
+    "period_days": 6,
+    "call_count": 933,
+    "estimated_waste_pct": 87.3,
+    "estimated_waste_usd": 4.84,
+    "top_waste_patterns": [
+      {
+        "pattern": "agent-loop-frontier",
+        "monthly_dollars": 4.84,
+        "rationale": "563 calls hit the same frontier model in a tight loop \u2014 agent loops should usually run on Haiku/gpt-5.4-mini class with frontier only as escalation.",
+        "fix_summary": "Default the loop to a mini/haiku model and escalate to frontier on retry."
+      }
+    ],
+    "by_model": {
+      "qwen3-coder:30b-a3b-q4_K_M": 0.0075,
+      "MiniMax-M2.7-highspeed": 0.9921,
+      "deepseek-chat": 0.0753,
+      "nvidia/nemotron-3-super-120b-a12b-20230311:free": 0.0,
+      "llama-3.3-70b-versatile": 0.0354
+    },
+    "pro_teaser": "Pro report adds per-call breakdown, 30-day projection, and a ready-to-paste LiteLLM config that implements every recommendation."
+  },
+  "real_quick_estimate": {
+    "monthly_saveable_usd": 1.0,
+    "rationale": "660 of 933 calls overspend versus the cheapest quality-equivalent peer. Routing fix is high-leverage.",
+    "confidence": "high"
+  },
+  "audit_meta": {
+    "data_source": "/Users/miloantaeus/.hermes/ops/control/state/model_cost_ledger.jsonl",
+    "ledger_rows_total": 1025,
+    "rows_after_filter": 933,
+    "filter_rules": [
+      "drop rows with tokens_used == 0",
+      "drop placeholder models ('default', 'supervisor-test-20260515')"
+    ],
+    "input_output_split_assumption": "70/30 input/output (conservative for tool-call + content workloads)",
+    "model_aliases_applied": {
+      "deepseek-v4-flash": "deepseek-chat (per pricing_table.py: V4-Flash is the canonical product name)"
+    },
+    "audit_period_days_actual": 6,
+    "audit_period_iso": "2026-05-11T18:04:56Z -> 2026-05-17T02:17:04Z",
+    "pii_strip": [
+      "no prompt content in source ledger",
+      "no API keys",
+      "no owner identity refs"
+    ],
+    "data_quality_caveats": [
+      "Ledger covers 6 days, not 30. Audit normalizes savings to monthly internally; small absolute dollars amplify modestly when extrapolated.",
+      "678 / 1025 (66%) of ledger rows had cost_usd=0. These are free-tier calls (Groq, OpenRouter free models, Ollama local). The audit engine refilled some via pricing-table lookup.",
+      "5 of 7 ledger model names map to pricing table (MiniMax-M2.7-highspeed, deepseek-v4-flash via alias, llama-3.3-70b-versatile). 'nvidia/nemotron-3-super-120b...:free' and 'qwen3-coder:30b...' are free-tier or local, not in pricing table.",
+      "tokens_used is total; 70/30 split is the assumption \u2014 actual split for MiniMax/DS4 may skew differently."
+    ]
+  }
+}
