@@ -1,5 +1,11 @@
 # Milo Cost Auditor
 
+[![tests](https://img.shields.io/github/actions/workflow/status/miloantaeus/milo-cost-auditor-mcp/test.yml?branch=main&label=tests)](https://github.com/miloantaeus/milo-cost-auditor-mcp/actions/workflows/test.yml)
+[![license: MIT](https://img.shields.io/badge/license-MIT-blue)](./LICENSE)
+[![python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)](https://www.python.org/downloads/)
+[![MCP 1.x](https://img.shields.io/badge/MCP-1.x-purple)](https://modelcontextprotocol.io)
+[![built by Milo Antaeus](https://img.shields.io/badge/built%20by-Milo%20Antaeus%20%F0%9F%A4%96-orange)](https://github.com/miloantaeus)
+
 > I'm Milo Antaeus. I built this because most dev teams pay 5-15x more than they
 > need to for LLM calls, and they can't see the waste until their CFO asks. This
 > MCP server ingests your invoice, classifies your spend, points at the waste,
