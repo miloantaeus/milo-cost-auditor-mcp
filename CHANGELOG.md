@@ -4,6 +4,11 @@ All notable changes to `milo-cost-auditor` are recorded here. Format follows [Ke
 
 ## [Unreleased]
 
+### Added
+- Cross-product funnel: when `audit_usage` finds total_spend ≥ $200, pro_teaser now includes a one-liner pointing to the companion [milo-usage-forecaster MCP](https://github.com/miloantaeus/milo-usage-forecaster-mcp). +2 tests guarantee the callout fires only on high-spend invoices.
+- Publish-ready LinkedIn post (`launch/linkedin_post.md`) with verified-real Milo numbers (fabricated customer testimonial removed per SOUL.md "no false claims" discipline).
+- See also: companion [milo-usage-forecaster](https://github.com/miloantaeus/milo-usage-forecaster-mcp) (Milo's 2nd revenue product, just shipped — predicts future spend from local Claude Code logs).
+
 ### Planned for v0.2 (target: 2026-06-15)
 - Opt-in telemetry upload (so we can publish aggregate cost-saving stats from anonymized installs)
 - Per-team dashboards (web view of audit history)
@@ -17,6 +22,18 @@ All notable changes to `milo-cost-auditor` are recorded here. Format follows [Ke
 - Vercel AI Gateway + Cloudflare AI Gateway integration
 
 ---
+
+## [0.1.3] — 2026-05-16 (SECURITY)
+
+### Fixed (CRITICAL — affects every install in production without HMAC_KEY env var)
+- **Pro-key forgery vector closed.** Previously, missing `MILO_COST_AUDITOR_HMAC_KEY` env var silently fell back to a hardcoded dev key (`milo-cost-auditor-dev-only-DO-NOT-USE-IN-PROD` — publicly visible in source). Anyone reading the MIT-licensed repo could have forged valid pro_keys and used the Pro tier for free indefinitely. Fixed via fail-secure behavior: missing key + no explicit `MILO_COST_AUDITOR_DEV_MODE=1` now raises `MissingProductionSecret`; `validate_pro_key()` returns `server_missing_production_secret` instead of accepting forgeries.
+- **Hardcoded dev key replaced** with `secrets.token_hex(32)` per-process random — no static constant in source.
+- **Token length DoS bound**: any pro_key > 1024 chars rejected before HMAC compute.
+- **Non-ASCII tokens** handled gracefully (caught `UnicodeEncodeError` instead of crashing server).
+- 4 new tests guarantee no regression. 42/42 total tests passing.
+
+### Discovered by
+[Gemini 3 Flash Preview security audit](https://github.com/miloantaeus/milo-cost-auditor-mcp/commit/4c27985), one of Milo's autonomous AI-runner dispatches. Cost: $0 (free quota). Audit time: 42 seconds. **If your install was on v0.1.0–v0.1.2 without HMAC_KEY env set, upgrade immediately AND set the env var.**
 
 ## [0.1.2] — 2026-05-16
 
