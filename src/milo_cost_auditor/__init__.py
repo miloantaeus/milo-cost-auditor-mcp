@@ -18,18 +18,28 @@ License: MIT
 Homepage: https://github.com/miloantaeus/milo-cost-auditor
 """
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 __author__ = "Milo Antaeus"
 __email__ = "miloantaeus@gmail.com"
 __license__ = "MIT"
 
-from milo_cost_auditor import audit_engine, routing_advisor, payment, pricing_table, telemetry
+from milo_cost_auditor import (
+    audit_engine,
+    lightning,
+    lightning_ledger,
+    payment,
+    pricing_table,
+    routing_advisor,
+    telemetry,
+)
 
 __all__ = [
     "__version__",
     "audit_engine",
-    "routing_advisor",
+    "lightning",
+    "lightning_ledger",
     "payment",
     "pricing_table",
+    "routing_advisor",
     "telemetry",
 ]

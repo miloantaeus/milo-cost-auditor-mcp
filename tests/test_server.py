@@ -101,6 +101,8 @@ def test_first_invocation_banner_then_silent() -> None:
     msg1 = telemetry.first_invocation_banner()
     msg2 = telemetry.first_invocation_banner()
     assert msg1 is not None
-    assert "v0.1" in msg1
+    # Banner reflects current __version__; assert prefix not exact major+minor.
+    from milo_cost_auditor import __version__
+    assert f"v{__version__}" in msg1
     assert "local" in msg1
     assert msg2 is None

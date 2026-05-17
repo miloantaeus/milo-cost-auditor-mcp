@@ -74,6 +74,47 @@ class PaymentRequest(BaseModel):
     instructions: str
 
 
+class LightningPaymentOption(BaseModel):
+    """Lightning Network payment leg of a dual payment request.
+
+    L402-style: pay the BOLT-11 invoice with any LN wallet, then poll
+    /api/v1/payments/<hash> until paid=true. The watcher CLI auto-issues
+    the pro_key and returns it on the same MCP turn (no email roundtrip).
+    """
+
+    rail: str = "lightning"
+    amount_sats: int
+    bolt11: str
+    payment_hash: str
+    expires_at: str  # ISO-8601 Zulu
+    provider: str  # "lnbits" / "alby" / "custom"
+    memo: str
+    instructions: str
+    poll_endpoint_hint: str = (
+        "Run `milo-cost-auditor-lightning-payment-watcher --once` to claim a "
+        "pro_key as soon as the invoice settles."
+    )
+
+
+class DualPaymentRequest(BaseModel):
+    """Both payment rails surfaced to the buyer.
+
+    `lightning` is None when LN provider isn't configured — callers should
+    fall back to the PayPal `legacy_paypal` leg.
+    """
+
+    tier: str
+    amount_usd: float
+    legacy_paypal: PaymentRequest
+    lightning: Optional["LightningPaymentOption"] = None
+    preferred_rail: str = "lightning"  # nudge agents to the M2M-friendly path
+    notes: str = (
+        "Two payment rails offered. Lightning is faster, cheaper, and requires "
+        "no KYC on either side (agents can pay agents). PayPal is the legacy "
+        "human-buyer path; needs an Owner-managed PayPal account."
+    )
+
+
 class KeyValidation(BaseModel):
     """Result of validating a pro_key."""
 
@@ -243,3 +284,107 @@ def build_payment_request(tier: str = "starter") -> PaymentRequest:
             "no callback to my server is required."
         ),
     )
+
+
+# ---- dual-rail payment (PayPal + Lightning) ------------------------------
+
+
+def tier_amount_sats(tier: str, *, rate: Optional[int] = None) -> int:
+    """Sat amount for a tier at the configured USD->sats rate."""
+    from milo_cost_auditor import lightning as _ln
+    if tier not in TIERS:
+        tier = "starter"
+    usd = float(TIERS[tier]["price_usd_monthly"])  # type: ignore[arg-type]
+    return _ln.usd_to_sats(usd, rate=rate)
+
+
+def build_dual_payment_request(
+    tier: str = "starter",
+    *,
+    lightning_provider: Optional[object] = None,
+    enable_lightning: bool = True,
+    invoice_memo: Optional[str] = None,
+    expires_minutes: int = 60,
+) -> "DualPaymentRequest":
+    """Build a dual-rail payment request: PayPal (legacy) + Lightning (M2M).
+
+    If Lightning provider creation or invoice minting fails for ANY reason
+    (env unset, network down, upstream 5xx), we still return a valid
+    DualPaymentRequest with lightning=None — the PayPal rail must always
+    work as a fallback.
+    """
+    if tier not in TIERS:
+        tier = "starter"
+    paypal_leg = build_payment_request(tier)
+
+    if not enable_lightning:
+        return DualPaymentRequest(
+            tier=tier,
+            amount_usd=paypal_leg.amount_usd,
+            legacy_paypal=paypal_leg,
+            lightning=None,
+            preferred_rail="paypal",
+        )
+
+    from milo_cost_auditor import lightning as _ln
+    try:
+        provider = lightning_provider or _ln.get_provider()
+        amount_sats = tier_amount_sats(tier)
+        memo = invoice_memo or f"milo-cost-auditor {tier} ({paypal_leg.amount_usd:g} USD)"
+        invoice = provider.create_invoice(  # type: ignore[union-attr]
+            amount_sats=amount_sats,
+            memo=memo,
+            expires_minutes=expires_minutes,
+        )
+        # Persist in the local ledger so the watcher can poll for settlement.
+        # Best-effort: a ledger write failure must not block returning the
+        # invoice to the buyer (they can still pay; manual reconciliation works).
+        try:
+            from milo_cost_auditor import lightning_ledger as _ledger
+            _ledger.record_invoice(
+                payment_hash=invoice.payment_hash,
+                amount_sats=invoice.amount_sats,
+                tier=tier,
+                bolt11=invoice.payment_request,
+                memo=invoice.memo,
+                provider=invoice.provider,
+            )
+        except Exception as _e:  # noqa: BLE001
+            import sys as _sys
+            _sys.stderr.write(f"# lightning ledger write failed: {_e}\n")
+        ln_option = LightningPaymentOption(
+            amount_sats=invoice.amount_sats,
+            bolt11=invoice.payment_request,
+            payment_hash=invoice.payment_hash,
+            expires_at=_ln.iso8601_utc(invoice.expires_at),
+            provider=invoice.provider,
+            memo=invoice.memo,
+            instructions=(
+                "1. Open the bolt11 invoice in any LN wallet (Alby, Phoenix, "
+                "Wallet of Satoshi, Zeus, etc.). 2. Pay the invoice. "
+                "3. Re-run get_pro_report with the same payment_hash, OR run "
+                "`milo-cost-auditor-lightning-payment-watcher --once` to claim "
+                "the pro_key. No KYC, no PayPal account, no email roundtrip."
+            ),
+        )
+        return DualPaymentRequest(
+            tier=tier,
+            amount_usd=paypal_leg.amount_usd,
+            legacy_paypal=paypal_leg,
+            lightning=ln_option,
+            preferred_rail="lightning",
+        )
+    except Exception as exc:  # noqa: BLE001 — provider can raise anything
+        # Log nothing to stdout (would pollute MCP stream). Return PayPal-only.
+        import sys as _sys
+        _sys.stderr.write(
+            f"# lightning rail unavailable, falling back to PayPal-only: "
+            f"{type(exc).__name__}: {exc}\n"
+        )
+        return DualPaymentRequest(
+            tier=tier,
+            amount_usd=paypal_leg.amount_usd,
+            legacy_paypal=paypal_leg,
+            lightning=None,
+            preferred_rail="paypal",
+        )

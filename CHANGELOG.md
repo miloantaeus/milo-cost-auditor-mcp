@@ -4,22 +4,42 @@ All notable changes to `milo-cost-auditor` are recorded here. Format follows [Ke
 
 ## [Unreleased]
 
-### Added
-- Cross-product funnel: when `audit_usage` finds total_spend ≥ $200, pro_teaser now includes a one-liner pointing to the companion [milo-usage-forecaster MCP](https://github.com/miloantaeus/milo-usage-forecaster-mcp). +2 tests guarantee the callout fires only on high-spend invoices.
-- Publish-ready LinkedIn post (`launch/linkedin_post.md`) with verified-real Milo numbers (fabricated customer testimonial removed per SOUL.md "no false claims" discipline).
-- See also: companion [milo-usage-forecaster](https://github.com/miloantaeus/milo-usage-forecaster-mcp) (Milo's 2nd revenue product, just shipped — predicts future spend from local Claude Code logs).
-
-### Planned for v0.2 (target: 2026-06-15)
+### Planned for v0.3 (target: 2026-06-15)
+- Live USD→sats conversion (CoinGecko / Kraken with 60s cache + 5% safety margin)
 - Opt-in telemetry upload (so we can publish aggregate cost-saving stats from anonymized installs)
 - Per-team dashboards (web view of audit history)
 - Scheduled re-audits (cron-style)
 - GitHub Advisory + OSV.dev sources for cross-product use
 - PyPI publish (once Owner credential lands)
 
-### Planned for v0.3 (target: 2026-07-15)
+### Planned for v0.4 (target: 2026-07-15)
 - Custom routing-rule DSL ingested via tool params
 - Exportable LiteLLM / Bifrost configs straight from the audit
 - Vercel AI Gateway + Cloudflare AI Gateway integration
+
+---
+
+## [0.2.0] — 2026-05-17 (REVENUE-MCP-COST-AUDITOR-L402-LIGHTNING-20260517)
+
+### Added — L402 Lightning Network payment path (M2M-friendly, no KYC on Milo's side)
+- **New module `lightning.py`** — `LightningProvider` abstract base, `LNBitsProvider` (default) and `AlbyProvider` (LNBits-compatible) concrete implementations. Provider auto-selects via `MILO_LIGHTNING_PROVIDER` env. Speaks the canonical LNBits REST API: `POST /api/v1/payments` to mint, `GET /api/v1/payments/<hash>` to poll status.
+- **New module `lightning_ledger.py`** — local SQLite cache (`~/.milo-cost-auditor/lightning_paid.db`) of outstanding + settled invoices. Idempotent `record_invoice` + `mark_paid` with race protection. `claim_paid_key` returns the issued pro_key for a paid invoice.
+- **`payment.build_dual_payment_request()`** — returns both rails (legacy PayPal + Lightning BOLT-11) in a single `DualPaymentRequest` envelope. Fails gracefully to PayPal-only if LN provider is unconfigured or upstream errors. Always returns a valid response.
+- **`payment.tier_amount_sats()` + `lightning.usd_to_sats()`** — deterministic 2026-Q2 rate-of-thumb conversion (1 USD ≈ 1000 sats at ~$100k BTC), rounds UP to avoid underbilling.
+- **`get_pro_report` tool** now accepts `tier` and `payment_hash` params: when a buyer pays an LN invoice and the watcher attaches a pro_key, calling `get_pro_report(payment_hash=...)` claims the key inline — no email roundtrip.
+- **New CLI `bin/milo-cost-auditor-lightning-payment-watcher`** — polls outstanding invoices every 60s, invokes existing `milo-cost-auditor-issue-pro-key` on settlement, logs to `~/.hermes/ops/control/money/cost_auditor_lightning_settlements.jsonl`.
+- **README "Pay in sats" section** documents the L402 path honestly: experimental, faster + cheaper than PayPal, no KYC on either side, recommended provider setup.
+- **28 new tests** (LNBits mock via `httpx.MockTransport`, ledger round-trips, dual-rail builder, graceful fallback). 72/72 total tests passing.
+
+### Notes
+- Existing PayPal path unchanged — back-compatible. `payment_request` key remains in the response for any client that hasn't upgraded yet; new clients should read `dual_payment_request`.
+- Single new transitive dependency (`httpx`) — already pulled by `mcp` SDK, no new top-level deps.
+- Per Milo doctrine: ship + measure. If no buyer pays in sats within 30 days, the LN rail is a candidate for self-deprecation (or stays as proof-of-infrastructure for the agent-to-agent thesis).
+
+### Cross-product funnel (carried from Unreleased)
+- When `audit_usage` finds total_spend ≥ $200, pro_teaser now includes a one-liner pointing to the companion [milo-usage-forecaster MCP](https://github.com/miloantaeus/milo-usage-forecaster-mcp). +2 tests guarantee the callout fires only on high-spend invoices.
+- Publish-ready LinkedIn post (`launch/linkedin_post.md`) with verified-real Milo numbers.
+- See also: companion [milo-usage-forecaster](https://github.com/miloantaeus/milo-usage-forecaster-mcp) (Milo's 2nd revenue product — predicts future spend from local Claude Code logs).
 
 ---
 

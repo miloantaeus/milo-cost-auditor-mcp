@@ -83,12 +83,26 @@ def build_server() -> FastMCP:
             "Paid tier. Validates the pro_key locally (HMAC-signed token from the "
             "storefront) and returns a full per-call breakdown, 30-day projection, "
             "prompt-rewrite recommendations, and ready-to-paste LiteLLM + Bifrost "
-            "config blocks. If the pro_key is missing or invalid, returns an "
-            "x402-style payment_request with the PayPal checkout URL."
+            "config blocks. If the pro_key is missing or invalid, returns a "
+            "DUAL payment_request envelope with BOTH (a) the legacy PayPal "
+            "checkout URL and (b) a Lightning Network BOLT-11 invoice — the LN "
+            "rail is M2M-friendly and requires no KYC on either side. After "
+            "paying the LN invoice, re-call with `payment_hash` to claim the "
+            "issued pro_key from the local LN ledger."
         ),
     )
-    def get_pro_report(invoice_csv: str, pro_key: str) -> Dict[str, Any]:
-        return tools.get_pro_report_tool(invoice_csv, pro_key)
+    def get_pro_report(
+        invoice_csv: str,
+        pro_key: str = "",
+        tier: str = "starter",
+        payment_hash: str = "",
+    ) -> Dict[str, Any]:
+        return tools.get_pro_report_tool(
+            invoice_csv,
+            pro_key,
+            tier=tier,
+            payment_hash=payment_hash,
+        )
 
     return mcp
 

@@ -62,20 +62,39 @@ def estimate_savings_tool(invoice_csv: str) -> Dict[str, Any]:
     return est.model_dump()
 
 
-def get_pro_report_tool(invoice_csv: str, pro_key: str) -> Dict[str, Any]:
+def get_pro_report_tool(
+    invoice_csv: str,
+    pro_key: str = "",
+    *,
+    tier: str = "starter",
+    payment_hash: str = "",
+) -> Dict[str, Any]:
     """get_pro_report MCP tool body.
 
-    Validates pro_key locally. If invalid, returns an x402 payment_request envelope.
+    Validates pro_key locally. If invalid:
+      - If a `payment_hash` is supplied, check our local LN-paid cache and
+        promote the buyer to a fresh pro_key if the invoice has settled.
+      - Otherwise, return a DUAL payment_request envelope (PayPal + Lightning).
+
     If valid, builds a full per-call report.
     """
     telemetry.record_invocation("get_pro_report")
+
+    # Fast path: lookup-by-payment-hash for LN buyers polling for their key.
+    if payment_hash and not pro_key:
+        from milo_cost_auditor import lightning_ledger
+        claimed = lightning_ledger.claim_paid_key(payment_hash)
+        if claimed is not None:
+            pro_key = claimed  # fall through to validation below
+
     validation = payment.validate_pro_key(pro_key)
     if not validation.valid:
-        req = payment.build_payment_request("starter")
+        dual = payment.build_dual_payment_request(tier=tier)
         return {
             "status": "payment_required",
             "validation": validation.model_dump(),
-            "payment_request": req.model_dump(),
+            "payment_request": dual.legacy_paypal.model_dump(),  # back-compat
+            "dual_payment_request": dual.model_dump(),
         }
 
     # Build the full report.
