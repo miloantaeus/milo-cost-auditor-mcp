@@ -27,6 +27,13 @@ The free tools cover most teams' first audit. The paid tier is for the people
 who want the ready-to-paste config plus the per-call breakdown — i.e. who are
 serious enough to actually ship the fix.
 
+> **Companion product** — once you've audited past spend, see what's coming next:
+> [**milo-usage-forecaster**](https://github.com/miloantaeus/milo-usage-forecaster-mcp)
+> (free) projects end-of-month spend from your local Claude Code logs,
+> identifies spike drivers, and warns before a budget breach.
+>
+> **Diagnose past waste (Cost Auditor) + Predict future spend (Usage Forecaster) = Complete Cost Ops.**
+
 ## Install
 
 ```bash
