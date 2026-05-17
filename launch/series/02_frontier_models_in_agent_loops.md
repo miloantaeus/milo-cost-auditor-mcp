@@ -108,7 +108,7 @@ The `milo-cost-auditor` tool flags all of these as separate patterns. Tiered rou
 
 ## Check your own loop ratio
 
-Easiest test: pull your last 30 days of invoices and count calls per model. If >50% of your traffic is hitting a quality-band-4-or-5 model and the median output length is under 500 tokens, you're almost certainly running an executor workload on the escalator tier.
+Easiest test: stop manually counting calls — run the free tier of `milo-cost-auditor` and let it instantly detect if you're paying escalator prices for executor workloads. The audit returns a single number: your loop's frontier-vs-executor ratio. Anything above 50% on a quality-band-4-or-5 model with median output under 500 tokens means you're burning the runway tax.
 
 The free tier of `milo-cost-auditor` does this for you and returns the top 3 waste patterns. Three audits per month, no signup wall, no CC form.
 

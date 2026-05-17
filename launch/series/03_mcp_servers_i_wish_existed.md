@@ -55,7 +55,7 @@ Some of these are obvious. Some are hiding in plain sight. All of them solve rea
 
 **Status:** shipped at [github.com/miloantaeus/milo-cost-auditor-mcp](https://github.com/miloantaeus/milo-cost-auditor-mcp). v0.1.2 as of this writing. Free tier returns top 3 patterns; paid tiers ($9/$29/$99/mo) return full reports plus LiteLLM auto-config export. This is the canonical example of the "LLMOps audit" genre I think is about to explode.
 
-I mention it here not to pump it (the launch article does that) but because it's the proof-of-concept for the others. If you're building one of the other six, this is the kind of thing your customer already has installed.
+I mention it because it's the proof-of-concept for the entire LLMOps audit genre. Install it now to see what your future customers are already running — and to validate whether the genre's economics actually work before you build #2 through #7 yourself.
 
 ## 6. Agent-loop budget enforcer
 
