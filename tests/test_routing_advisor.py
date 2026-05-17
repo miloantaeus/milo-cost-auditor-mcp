@@ -36,7 +36,7 @@ def test_suggest_routing_unknown_model() -> None:
 
 def test_suggest_routing_for_deep_reasoning_keeps_quality() -> None:
     """deep-reasoning requires quality band 4; cheap weak models should be excluded."""
-    plan = routing_advisor.suggest_routing("gpt-5", "deep-reasoning")
+    plan = routing_advisor.suggest_routing("gpt-5.5", "deep-reasoning")
     assert plan.min_quality_required == 4
     # Every alternative must be quality band 4 or higher.
     for alt in plan.alternatives:
@@ -57,13 +57,13 @@ def test_suggest_routing_already_cheapest() -> None:
 
 
 def test_litellm_yaml_includes_router_settings() -> None:
-    plan = routing_advisor.suggest_routing("claude-4-opus", "summarization")
+    plan = routing_advisor.suggest_routing("claude-opus-4.7", "summarization")
     assert "model_list:" in plan.litellm_yaml
     assert "router_settings:" in plan.litellm_yaml
     assert "fallbacks:" in plan.litellm_yaml
 
 
 def test_task_pattern_default() -> None:
-    plan = routing_advisor.suggest_routing("gpt-5", "")
+    plan = routing_advisor.suggest_routing("gpt-5.5", "")
     # Empty pattern falls back to routine-synthesis
     assert plan.task_pattern == "routine-synthesis"

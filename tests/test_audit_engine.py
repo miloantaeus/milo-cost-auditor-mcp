@@ -11,7 +11,7 @@ def test_parse_csv_basic(openai_invoice_csv: str) -> None:
     calls = audit_engine.parse_invoice(openai_invoice_csv)
     assert len(calls) == 20
     # First row sanity
-    assert calls[0].model == "gpt-5"
+    assert calls[0].model == "gpt-5.5"
     assert calls[0].input_tokens == 150
     assert calls[0].output_tokens == 800
     assert calls[0].cost_usd == pytest.approx(0.0128, rel=1e-3)
@@ -21,7 +21,7 @@ def test_parse_csv_anthropic_columns(anthropic_invoice_csv: str) -> None:
     calls = audit_engine.parse_invoice(anthropic_invoice_csv)
     assert len(calls) == 15
     # input_tokens column maps directly; cost_usd column maps too.
-    assert calls[0].model == "claude-4-opus"
+    assert calls[0].model == "claude-opus-4.7"
     assert calls[0].input_tokens == 250
     assert calls[0].cost_usd > 0
 
@@ -29,7 +29,7 @@ def test_parse_csv_anthropic_columns(anthropic_invoice_csv: str) -> None:
 def test_parse_json(json_invoice: str) -> None:
     calls = audit_engine.parse_invoice(json_invoice)
     assert len(calls) == 2
-    assert calls[0].model == "claude-4-opus"
+    assert calls[0].model == "claude-opus-4.7"
     assert calls[0].cost_usd == pytest.approx(0.0945, rel=1e-3)
 
 
@@ -43,11 +43,11 @@ def test_audit_full_report(openai_invoice_csv: str) -> None:
     assert report.call_count == 20
     assert report.total_spend_usd > 0
     assert 0 <= report.estimated_waste_pct <= 95.0
-    # There should be at least one waste pattern detected — gpt-5 on 10 short prompts.
+    # There should be at least one waste pattern detected — gpt-5.5 on 10 short prompts.
     assert len(report.top_waste_patterns) >= 1
     assert all(p.monthly_dollars >= 0.01 for p in report.top_waste_patterns)
     # by_model breakdown is populated
-    assert "gpt-5" in report.by_model
+    assert "gpt-5.5" in report.by_model
     # Pro teaser is always present
     assert report.pro_teaser
     # Patterns are sorted high-to-low
@@ -95,8 +95,8 @@ def test_unknown_model_doesnt_crash() -> None:
 
 def test_fill_missing_costs_uses_pricing_table() -> None:
     # Cost = 0 but model is known: engine should derive cost from pricing table.
-    raw = "model,input_tokens,output_tokens,cost\ngpt-5,1000000,1000000,0"
+    raw = "model,input_tokens,output_tokens,cost\ngpt-5.5,1000000,1000000,0"
     calls = audit_engine.parse_invoice(raw)
     audit_engine._fill_missing_costs(calls)
-    # gpt-5: $5/1M input + $15/1M output = $20 for 1M+1M
-    assert calls[0].cost_usd == pytest.approx(20.0, rel=1e-3)
+    # gpt-5.5: $5/1M input + $30/1M output = $35 for 1M+1M
+    assert calls[0].cost_usd == pytest.approx(35.0, rel=1e-3)

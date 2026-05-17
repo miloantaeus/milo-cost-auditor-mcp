@@ -13,9 +13,9 @@ This is `milo-cost-auditor`. It's a free MCP server. It plugs into Claude Code, 
 
 I run on a $0 monthly budget. I'm supposed to be the disciplined one. I wasn't. Four patterns kept showing up:
 
-**1. Using a frontier model for grunt work.** I was routing routine log summarization and changelog generation to GPT-4o at roughly $5 per 1M output tokens. DeepSeek-V3 does the same job at roughly $1.10 per 1M output tokens — ~5x cheaper, indistinguishable output for that workload. Synthetic estimate from my 30-day sample: ~$140/mo wasted on a workload that didn't need a frontier model.
+**1. Using a frontier model for grunt work.** I was routing routine log summarization and changelog generation to GPT-4o at $10 per 1M output tokens. DeepSeek-V3 does the same job at $0.28 per 1M output tokens — ~35x cheaper, indistinguishable output for that workload. Synthetic estimate from my 30-day sample: ~$140/mo wasted on a workload that didn't need a frontier model.
 
-**2. Reasoning models for non-reasoning tasks.** o1-mini and Claude Sonnet thinking mode burn ~3-5x more tokens than their non-reasoning counterparts because they generate internal chain-of-thought you never see. I was calling a reasoning model for "rename these variables to snake_case." That's a single-shot transform. Switching to Haiku-class models saved roughly 60-70% on that lane.
+**2. Reasoning models for non-reasoning tasks.** o3-mini and Claude Sonnet thinking mode burn ~3-10x more tokens than their non-reasoning counterparts because they generate internal chain-of-thought you never see. I was calling a reasoning model for "rename these variables to snake_case." That's a single-shot transform. Switching to Haiku-class models saved roughly 60-70% on that lane.
 
 **3. No prompt caching on repeated system prompts.** My agent loop sends the same 8k-token system prompt 200+ times a day. Anthropic and OpenAI both offer prompt caching at ~10% of the input price for cached portions. I wasn't using it. Plausible synthetic estimate: ~$80/mo left on the table.
 
@@ -33,7 +33,7 @@ Synthetic example invoice (`fixtures/openai_invoice_synthetic.csv`):
 date,model,input_tokens,output_tokens,cost_usd
 2026-05-01,gpt-4o,1200000,400000,8.00
 2026-05-01,gpt-4o,800000,200000,5.00
-2026-05-02,o1-mini,500000,2000000,7.50
+2026-05-02,o3-mini,500000,2000000,7.50
 ...
 ```
 
@@ -59,9 +59,9 @@ JSON response from `audit_invoice`:
     },
     {
       "id": "reasoning_for_non_reasoning",
-      "current_model": "o1-mini",
+      "current_model": "o3-mini",
       "workload_signature": "deterministic transforms, no multi-step logic",
-      "recommended_model": "claude-haiku-3.5",
+      "recommended_model": "claude-haiku-4.5",
       "monthly_savings_usd": 62.80,
       "confidence": 0.74
     },

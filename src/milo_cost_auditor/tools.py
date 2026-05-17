@@ -161,7 +161,7 @@ def _prompt_rewrite_recommendations(calls: list) -> list[str]:
     if avg_output > avg_input * 3:
         recs.append(
             "Output >> input ratio (summarization shape). Route summarization to "
-            "claude-4-haiku, gemini-3-flash, or deepseek-v3.5."
+            "claude-haiku-4.5, gemini-3-flash-preview, or deepseek-v3."
         )
     # frontier-on-tiny-prompt
     short_frontier = 0
@@ -173,8 +173,8 @@ def _prompt_rewrite_recommendations(calls: list) -> list[str]:
     if short_frontier > 0:
         recs.append(
             f"{short_frontier} calls hit a frontier model with <500 input tokens. "
-            "Add a router rule: if input < 500 tokens, downroute to gpt-5-mini or "
-            "claude-4-haiku."
+            "Add a router rule: if input < 500 tokens, downroute to gpt-5.4-mini or "
+            "claude-haiku-4.5."
         )
     if not recs:
         recs.append(

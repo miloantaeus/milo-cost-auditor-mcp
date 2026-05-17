@@ -264,7 +264,7 @@ def _waste_pattern_from_bucket(
         ),
         "agent-loop-frontier": (
             f"{len(bucket)} calls hit the same frontier model in a tight loop — "
-            "agent loops should usually run on Haiku/gpt-5-mini class with frontier only as escalation."
+            "agent loops should usually run on Haiku/gpt-5.4-mini class with frontier only as escalation."
         ),
         "long-context-but-tiny-output": (
             f"{len(bucket)} calls fed >50k input tokens but produced <500 output — "
@@ -272,10 +272,10 @@ def _waste_pattern_from_bucket(
         ),
     }
     fixes = {
-        "short-prompt-frontier": "Route short-prompt calls to gpt-5-mini, claude-4-haiku, or gemini-3-flash.",
-        "expansive-frontier": "Move summarization to claude-4-haiku, gemini-3-flash, or deepseek-v3.5.",
+        "short-prompt-frontier": "Route short-prompt calls to gpt-5.4-mini, claude-haiku-4.5, or gemini-3-flash-preview.",
+        "expansive-frontier": "Move summarization to claude-haiku-4.5, gemini-3-flash-preview, or deepseek-v3.",
         "agent-loop-frontier": "Default the loop to a mini/haiku model and escalate to frontier on retry.",
-        "long-context-but-tiny-output": "Use gemini-3-flash (1-2M context) or claude-4-haiku for retrieval.",
+        "long-context-but-tiny-output": "Use gemini-3-flash-preview (1-2M context) or claude-haiku-4.5 for retrieval.",
     }
     return WastePattern(
         pattern=pattern,

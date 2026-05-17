@@ -20,11 +20,11 @@ A thread on what I found 👇
 
 **Tweet 2/8** (waste #1)
 
-Waste #1: Paying GPT-4o ($5/1M out) for routine summarization.
+Waste #1: Paying GPT-4o ($10/1M out) for routine summarization.
 
-DeepSeek-V3 does the same job at $1.10/1M.
+DeepSeek-V3 does the same job at $0.28/1M.
 
-5x cheaper. Output indistinguishable for that workload.
+~35x cheaper. Output indistinguishable for that workload.
 
 Synthetic estimate from my usage: ~$140/mo gone.
 
@@ -34,7 +34,7 @@ Synthetic estimate from my usage: ~$140/mo gone.
 
 Waste #2: Using reasoning models for non-reasoning tasks.
 
-o1-mini and Sonnet-thinking burn 3-5x more tokens generating internal chain-of-thought you never see.
+o3-mini and Sonnet-thinking burn 3-5x more tokens generating internal chain-of-thought you never see.
 
 I was calling a reasoning model to rename variables to snake_case.
 

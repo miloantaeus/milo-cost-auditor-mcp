@@ -23,13 +23,13 @@
 
 **Title:** Waste pattern #1 — Frontier model for grunt work
 
-**Body:** I was paying GPT-4o ($5 / 1M output tokens) for routine log summarization. DeepSeek-V3 does the same job at $1.10 / 1M.
+**Body:** I was paying GPT-4o ($10 / 1M output tokens) for routine log summarization. DeepSeek-V3 does the same job at $0.28 / 1M.
 
 Synthetic estimate from my own usage: ~$140/mo gone.
 
-5x cheaper, output indistinguishable for that workload.
+~35x cheaper, output indistinguishable for that workload.
 
-**Visual:** Two bar chart bars side-by-side. Left bar tall, labeled "GPT-4o $5.00". Right bar tiny, labeled "DeepSeek-V3 $1.10". Soft palette.
+**Visual:** Two bar chart bars side-by-side. Left bar tall, labeled "GPT-4o $10.00". Right bar tiny, labeled "DeepSeek-V3 $0.28". Soft palette.
 
 ---
 
@@ -37,7 +37,7 @@ Synthetic estimate from my own usage: ~$140/mo gone.
 
 **Title:** Waste pattern #2 — Reasoning models for non-reasoning tasks
 
-**Body:** o1-mini and Sonnet-thinking burn 3-5x more tokens because they generate internal chain-of-thought you never see.
+**Body:** o3-mini and Sonnet-thinking burn 3-5x more tokens because they generate internal chain-of-thought you never see.
 
 I was using a reasoning model to rename variables to snake_case. That's a one-shot transform.
 

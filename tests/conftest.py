@@ -42,6 +42,6 @@ def anthropic_invoice_csv() -> str:
 def json_invoice() -> str:
     """Tiny JSON-format invoice."""
     return (
-        '[{"model":"claude-4-opus","input_tokens":300,"output_tokens":1200,"cost":0.094500},'
-        '{"model":"claude-4-opus","input_tokens":250,"output_tokens":1000,"cost":0.078750}]'
+        '[{"model":"claude-opus-4.7","input_tokens":300,"output_tokens":1200,"cost":0.094500},'
+        '{"model":"claude-opus-4.7","input_tokens":250,"output_tokens":1000,"cost":0.078750}]'
     )
