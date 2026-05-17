@@ -22,6 +22,11 @@ def isolate_telemetry_home(tmp_path, monkeypatch):
     """Send all telemetry state into a per-test tmp dir."""
     home = tmp_path / "milo-cost-auditor-home"
     monkeypatch.setenv("MILO_COST_AUDITOR_HOME", str(home))
+    # SECURITY: tests run in dev mode (post-Gemini-audit hardening).
+    # Production refuses dev fallback unless MILO_COST_AUDITOR_DEV_MODE=1.
+    # Setting this in conftest preserves test behavior while keeping the
+    # CRITICAL fix active for any non-test process.
+    monkeypatch.setenv("MILO_COST_AUDITOR_DEV_MODE", "1")
     # Wipe in-process flags
     from milo_cost_auditor import telemetry
     telemetry.reset_for_tests()

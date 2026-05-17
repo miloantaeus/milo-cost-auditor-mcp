@@ -86,23 +86,50 @@ class KeyValidation(BaseModel):
 # ---- env / secret handling ------------------------------------------------
 
 
-_DEV_KEY = "milo-cost-auditor-dev-only-DO-NOT-USE-IN-PROD"
+# SECURITY HARDENING (per Gemini security audit 2026-05-17):
+# 1. CRITICAL: Silent dev-key fallback in production = anyone can forge
+#    pro_keys with the publicly-visible dev key. Fixed by requiring
+#    explicit MILO_COST_AUDITOR_DEV_MODE=1 to allow dev key.
+# 2. HIGH: Static dev key replaced with per-process random — even in
+#    dev mode, the key changes between server restarts (forces tests/clients
+#    to be aware of dev-mode rather than silently relying on a known string).
+import secrets as _secrets
+
+# Per-process random dev key; not a constant. Tests can override via secret param.
+# Stored as bytes since hmac.new() requires bytes for the key parameter.
+_DEV_KEY = _secrets.token_hex(32).encode("utf-8")
+
+
+class MissingProductionSecret(RuntimeError):
+    """Raised when a production HMAC secret is required but not set."""
 
 
 def _get_hmac_secret() -> bytes:
-    """Return the HMAC secret. Falls back to dev key with a warning."""
+    """Return the HMAC secret.
+
+    Production: requires MILO_COST_AUDITOR_HMAC_KEY env var (32+ random hex).
+    Dev mode: requires MILO_COST_AUDITOR_DEV_MODE=1 to explicitly opt in;
+              uses per-process random _DEV_KEY (changes on each server restart).
+    """
     secret = os.environ.get("MILO_COST_AUDITOR_HMAC_KEY")
     if secret:
         return secret.encode("utf-8")
-    # Dev-mode fallback. Anything signed with this key will validate ONLY when
-    # the same dev key is in use — i.e. it won't accidentally validate a
-    # production key. The warning is emitted at server boot in server.py.
-    return _DEV_KEY.encode("utf-8")
+    # Fail-secure: refuse dev key unless explicitly enabled.
+    if os.environ.get("MILO_COST_AUDITOR_DEV_MODE") == "1":
+        return _DEV_KEY
+    raise MissingProductionSecret(
+        "MILO_COST_AUDITOR_HMAC_KEY not set. Production refuses dev fallback. "
+        "For local development, set MILO_COST_AUDITOR_DEV_MODE=1 (per-process "
+        "random dev key will be used)."
+    )
 
 
 def is_dev_mode() -> bool:
-    """True when no MILO_COST_AUDITOR_HMAC_KEY is set."""
-    return not os.environ.get("MILO_COST_AUDITOR_HMAC_KEY")
+    """True when no MILO_COST_AUDITOR_HMAC_KEY is set AND dev mode is enabled."""
+    return (
+        not os.environ.get("MILO_COST_AUDITOR_HMAC_KEY")
+        and os.environ.get("MILO_COST_AUDITOR_DEV_MODE") == "1"
+    )
 
 
 # ---- key issue + verify ---------------------------------------------------
@@ -124,11 +151,26 @@ def validate_pro_key(token: Optional[str], *, now_ts: Optional[float] = None) ->
     """Validate a pro_key. Returns KeyValidation."""
     if not token or not isinstance(token, str):
         return KeyValidation(valid=False, reason="missing_token")
+    # SECURITY: bound the token length to prevent DoS via massive HMAC inputs
+    # (per Gemini security audit 2026-05-17). Legitimate keys are <512 chars.
+    if len(token) > 1024:
+        return KeyValidation(valid=False, reason="token_too_large")
     parts = token.split(".")
     if len(parts) != 2:
         return KeyValidation(valid=False, reason="malformed_token")
     payload_b64, sig = parts
-    secret = _get_hmac_secret()
+    # SECURITY: catch non-ASCII gracefully instead of crashing server.
+    try:
+        payload_b64_bytes = payload_b64.encode("ascii")
+        sig.encode("ascii")  # also validate sig is ascii-safe
+    except UnicodeEncodeError:
+        return KeyValidation(valid=False, reason="malformed_token")
+    try:
+        secret = _get_hmac_secret()
+    except MissingProductionSecret:
+        # Production secret unconfigured: refuse all validations.
+        # This is fail-secure — better to reject all than silently allow forgeries.
+        return KeyValidation(valid=False, reason="server_missing_production_secret")
     expected_sig = hmac.new(secret, payload_b64.encode("ascii"), hashlib.sha256).hexdigest()
     if not hmac.compare_digest(expected_sig, sig):
         return KeyValidation(valid=False, reason="bad_signature")
