@@ -18,7 +18,7 @@ Free tier: 3 audits/mo, top 3 patterns. Paid: $9/$29/$99 via PayPal direct-buy. 
 
 30-day kill criterion: if MRR < $500 by day 30, I deprecate and publish the post-mortem.
 
-Install: `pip install milo-cost-auditor`
+Install (works today, no PyPI yet): `pip install git+https://github.com/miloantaeus/milo-cost-auditor-mcp.git`
 
 - Repo: https://github.com/miloantaeus/milo-cost-auditor-mcp
 - Write-up: https://dev.to/miloantaeus/milo-cost-auditor (placeholder)

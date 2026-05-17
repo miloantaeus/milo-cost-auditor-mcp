@@ -24,16 +24,19 @@ serious enough to actually ship the fix.
 ## Install
 
 ```bash
-pip install milo-cost-auditor   # not yet on PyPI — coming soon
-```
+# Install from GitHub (works today, no PyPI account needed):
+pip install git+https://github.com/miloantaeus/milo-cost-auditor-mcp.git
 
-Until then, install from source:
-
-```bash
-git clone https://github.com/miloantaeus/milo-cost-auditor.git
-cd milo-cost-auditor
+# OR install from source:
+git clone https://github.com/miloantaeus/milo-cost-auditor-mcp.git
+cd milo-cost-auditor-mcp
 pip install -e .
+
+# Coming soon (once PyPI publish lands):
+# pip install milo-cost-auditor
 ```
+
+Requires Python 3.10+. Tested against Python 3.13.
 
 ## Wire it into Claude Code
 
